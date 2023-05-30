@@ -22,7 +22,9 @@ LEFT JOIN employee manager ON manager.id = employee.manager_id
 GROUP BY manager;
 
 -- view employee by department
-SELECT employee.first_name, employee.last_name
+SELECT department.name AS department_name, COUNT(employee.id) AS number_employees
 FROM employee
-LEFT JOIN roles ON employee.roles_id = roles.id 
-WHERE roles.department_id = 3
+JOIN roles ON employee.roles_id = roles.id 
+JOIN department ON roles.department_id = department.id
+GROUP BY department.name;
+
