@@ -1,9 +1,6 @@
 const inquirer = require('inquirer');
 const db = require('./config/connection')
 
-
-
-
 //
 const viewAllEmployees = () => {
     const employeeQuery = `SELECT employee.id, employee.first_name, employee.last_name, roles.title, department.name AS department, roles.salary, 
@@ -313,13 +310,22 @@ const deleteEmployees = () => {
         .then((answer)=>{
   const deleteEmployeeQuery = `DELETE FROM employee WHERE id = '${answer.employeeId}'`
  
-  const displayDeleted = `SELECT CONCAT(employee.first_name, " ", employee.last_name) WHERE employee.id = '${answer.employeeId}`;
+   const selectEmployeeQuery = `SELECT CONCAT(employee.first_name, " ", employee.last_name) AS name FROM employee WHERE employee.id = '${answer.employeeId}'`;
+  
     db.promise().query(deleteEmployeeQuery)
     
         .then(() => {
-            
-            console.log(displayDeleted  + 'deleted from the list.')
-            mainPrompt()
+            db.promise().query(selectEmployeeQuery)
+            .then((result)=> {
+                if (result[0].name){
+                    console.log(`${result[0].name}  deleted from the list.`)
+                }  
+            })
+            .catch((err) => {
+                console.log(err)
+                db.end()
+            })
+         mainPrompt()
         })
         .catch((err) => {
             console.log(err)
@@ -374,10 +380,6 @@ function mainPrompt() {
             updateEmployeeManager()
         } else if (answer.view === 'Delete employees') {
             deleteEmployees()
-        } else if (answer.view === 'Delete departments') {
-            deleteDepartment()
-        } else if (answer.view === 'Delete roles') {
-            deleteRoles()
         } else {
             db.end()
         }

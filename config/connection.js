@@ -1,7 +1,7 @@
 const mysql = require('mysql2');
 require('dotenv').config();
 
-
+//
 const db = mysql.createConnection(
     {
        database: process.env.DB_NAME,
