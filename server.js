@@ -1,15 +1,15 @@
 const inquirer = require('inquirer');
 const db = require('./config/connection')
 
-//
+//View all employees
 const viewAllEmployees = () => {
     const employeeQuery = `SELECT employee.id, employee.first_name, employee.last_name, roles.title, department.name AS department, roles.salary, 
     CONCAT(manager.first_name, ' ', manager.last_name) AS manager 
     FROM employee LEFT JOIN roles on employee.roles_id = roles.id 
     LEFT JOIN department on roles.department_id = department.id 
     LEFT JOIN employee manager on manager.id = employee.manager_id`
-    
-    //
+
+    //Query the database to get employee data
     db.promise().query(employeeQuery)
         .then(([result]) => {
             console.table(result)
@@ -20,11 +20,11 @@ const viewAllEmployees = () => {
         })
 }
 
-//
+//View all roles
 const viewAllRoles = () => {
     const roleQuery = `SELECT roles.id, roles.title, department.name AS department, roles.salary FROM roles LEFT JOIN department on roles.department_id = department.id`
 
-    //
+    //Query the database to get roles data
     db.promise().query(roleQuery)
         .then(([result]) => {
             console.table(result)
@@ -35,11 +35,11 @@ const viewAllRoles = () => {
         })
 }
 
-//
+//View all departments
 const viewAllDepartments = () => {
     const departmentQuery = `SELECT * FROM department`
 
-    //
+    //Query the database to get department data
     db.promise().query(departmentQuery)
         .then(([result]) => {
             console.table(result)
@@ -50,11 +50,11 @@ const viewAllDepartments = () => {
         })
 }
 
-//
+//View employee by manager
 const viewEmployeeByManager = () => {
     const employManagerQuery = `SELECT COUNT(employee.id) AS number_employees, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN employee manager ON manager.id = employee.manager_id GROUP BY manager`
 
-    //
+    //Query the database to get employee count by manager
     db.promise().query(employManagerQuery)
         .then(([result]) => {
             console.table(result)
@@ -65,7 +65,7 @@ const viewEmployeeByManager = () => {
         })
 }
 
-//
+//Add a department
 const addDepartment = () => {
     inquirer.prompt([
         {
@@ -75,6 +75,8 @@ const addDepartment = () => {
         }
     ])
         .then((answer) => {
+
+            //Insert department into the database
             db.promise().query(`INSERT INTO department (name) VALUES('${answer.nameOfDepartment}')`)
                 .then(() => {
 
@@ -88,7 +90,7 @@ const addDepartment = () => {
         })
 }
 
-//
+//Add a role
 const addRole = () => {
     inquirer.prompt([
         {
@@ -115,6 +117,8 @@ const addRole = () => {
         }
     ])
         .then((answer) => {
+
+            //Insert a role into the database
             db.promise().query(`INSERT INTO roles (title, salary, department_id) VALUES ('${answer.nameOfRole}', '${answer.salary}', (SELECT id FROM department WHERE name = '${answer.roleDepartment}'))`)
                 .then(() => {
 
@@ -128,7 +132,7 @@ const addRole = () => {
         })
 }
 
-//
+//Add an employee
 const addEmployee = () => {
     inquirer.prompt([
         {
@@ -182,6 +186,8 @@ const addEmployee = () => {
           (SELECT id FROM roles WHERE title = '${answer.employeeRole}'),
           (SELECT holder.id FROM (SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = '${answer.managerName}') AS holder)
         )`
+
+            //Insert an employee into the database
             db.promise().query(addEmployeeQuery)
                 .then(() => {
 
@@ -196,7 +202,7 @@ const addEmployee = () => {
 
 }
 
-//
+//Update role
 const updateEmployeeRole = () => {
     inquirer.prompt([
         {
@@ -234,8 +240,10 @@ const updateEmployeeRole = () => {
     ])
         .then((answer) => {
             const updateRoleQuery = `UPDATE employee 
-    SET roles_id = SELECT id FROM roles WHERE title = '${answer.newRole}' 
-    WHERE CONCAT(first_name, '', last_name) = '${answer.updateEmployeeName}'`
+    SET roles_id = (SELECT id FROM roles WHERE title = '${answer.newRole}') 
+    WHERE CONCAT(first_name, ' ', last_name) = '${answer.updateEmployeeName}'`
+
+            // Update role in the database
             db.promise().query(updateRoleQuery)
                 .then(() => {
 
@@ -250,55 +258,7 @@ const updateEmployeeRole = () => {
 
 }
 
-//
-const updateEmployeeManager = () => {
-    inquirer.prompt([
-        {
-            type: 'list',
-            message: "Which employee's manager do you want to update?",
-            name: 'updateEmployeeManager',
-            choices: [
-                'Tom Turner',
-                'John Sean',
-                'Ashley Handerson',
-                'Anu Bora',
-                'Jackson Chris',
-                'Bakam Peter',
-                'Thony Jim',
-                'Harmony Cole'
-            ]
-        },
-        {
-            type: 'input',
-            message: 'What is the first name of the new manager?',
-            name: 'managerFirstName',
-
-        },
-        {
-            type: 'input',
-            message: 'What is the last name of the new manager?',
-            name: 'managerLastName',
-
-        },
-    ])
-        .then((answer) => {
-            const updateManagerQuery = `UPDATE employee SET manager_id = (SELECT employee.id FROM employee 
-            LEFT JOIN employee manager ON manager.id = employee.manager_id
-    WHERE CONCAT(manager.first_name, " ", manager.last_name) = CONCAT('${answer.managerFirstName}', " ", '${answer.managerLastName}'))`
-            db.promise().query(updateManagerQuery)
-                .then(() => {
-
-                    console.log(` Updated employee's manager`)
-                    mainPrompt()
-                })
-                .catch((err) => {
-                    console.log(err)
-                    db.end()
-                })
-        })
-
-}
-
+// Delete an employee
 const deleteEmployees = () => {
     inquirer.prompt(
         {
@@ -307,34 +267,35 @@ const deleteEmployees = () => {
             name: 'employeeId',
 
         })
-        .then((answer)=>{
-  const deleteEmployeeQuery = `DELETE FROM employee WHERE id = '${answer.employeeId}'`
- 
-   const selectEmployeeQuery = `SELECT CONCAT(employee.first_name, " ", employee.last_name) AS name FROM employee WHERE employee.id = '${answer.employeeId}'`;
-  
-    db.promise().query(deleteEmployeeQuery)
-    
-        .then(() => {
-            db.promise().query(selectEmployeeQuery)
-            .then((result)=> {
-                if (result[0].name){
-                    console.log(`${result[0].name}  deleted from the list.`)
-                }  
-            })
-            .catch((err) => {
-                console.log(err)
-                db.end()
-            })
-         mainPrompt()
-        })
-        .catch((err) => {
-            console.log(err)
-            db.end()
-        })
+        .then((answer) => {
+            const deleteEmployeeQuery = `DELETE FROM employee WHERE id = '${answer.employeeId}'`
+
+            const selectEmployeeQuery = `SELECT CONCAT(employee.first_name, " ", employee.last_name) AS name FROM employee WHERE employee.id = '${answer.employeeId}'`;
+
+            // Delete employee from the database
+            db.promise().query(deleteEmployeeQuery)
+
+                .then(() => {
+                    db.promise().query(selectEmployeeQuery)
+                        .then((result) => {
+                            if (result[0].name) {
+                                console.log(`${result[0].name}  deleted from the list.`)
+                            }
+                        })
+                        .catch((err) => {
+                            console.log(err)
+                            db.end()
+                        })
+                    mainPrompt()
+                })
+                .catch((err) => {
+                    console.log(err)
+                    db.end()
+                })
         })
 }
 
-//
+//Display the main prompt
 function mainPrompt() {
     inquirer.prompt([
         {
@@ -350,40 +311,35 @@ function mainPrompt() {
                 'Add roles',
                 'Add employees',
                 'Update employee roles',
-                'Update employee managers',
                 'Delete employees',
-                'Delete departments',
-                'Delete roles'
             ]
         }
 
     ])
-    .then((answer) => {
-        //
-        if (answer.view === 'View all employees') {
-            viewAllEmployees()
-        } else if (answer.view === 'View all roles') {
-            viewAllRoles()
-        } else if (answer.view === 'View all departments') {
-            viewAllDepartments()
-        } else if (answer.view === 'View employee by manager') {
-            viewEmployeeByManager()
-        } else if (answer.view === 'Add roles') {
-            addRole()
-        } else if (answer.view == 'Add departments') {
-            addDepartment()
-        } else if (answer.view === 'Add employees') {
-            addEmployee()
-        } else if (answer.view === 'Update employee roles') {
-            updateEmployeeRole()
-        } else if (answer.view === 'Update employee managers') {
-            updateEmployeeManager()
-        } else if (answer.view === 'Delete employees') {
-            deleteEmployees()
-        } else {
-            db.end()
-        }
-    })
+        .then((answer) => {
+            //
+            if (answer.view === 'View all employees') {
+                viewAllEmployees()
+            } else if (answer.view === 'View all roles') {
+                viewAllRoles()
+            } else if (answer.view === 'View all departments') {
+                viewAllDepartments()
+            } else if (answer.view === 'View employee by manager') {
+                viewEmployeeByManager()
+            } else if (answer.view === 'Add roles') {
+                addRole()
+            } else if (answer.view == 'Add departments') {
+                addDepartment()
+            } else if (answer.view === 'Add employees') {
+                addEmployee()
+            } else if (answer.view === 'Update employee roles') {
+                updateEmployeeRole()
+            } else if (answer.view === 'Delete employees') {
+                deleteEmployees()
+            } else {
+                db.end()
+            }
+        })
 }
 
 mainPrompt()

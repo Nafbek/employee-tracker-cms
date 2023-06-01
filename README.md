@@ -40,7 +40,7 @@ To start this application, initialize MySQL by running the command <mysql -u roo
   
 You can also watch a walkthrough video that demonsatrates the functionality of the application using the following syntax.
 
-  ![Demo Video] () 
+  ![Demo Video] (https://drive.google.com/file/d/1-jmIxANi30HIb9DjWUdFGyYQwcUrB7fv/view)  
   
 ## License
 N/A
