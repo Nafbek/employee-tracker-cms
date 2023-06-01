@@ -28,3 +28,5 @@ JOIN roles ON employee.roles_id = roles.id
 JOIN department ON roles.department_id = department.id
 GROUP BY department.name;
 
+
+

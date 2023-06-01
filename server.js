@@ -1,15 +1,8 @@
 const inquirer = require('inquirer');
-const mysql = require('mysql2');
+const db = require('./config/connection')
 
-const db = mysql.createConnection(
-    {
-        host: 'localhost',
-        user: 'root',
-        password: 'Go4server@2023',
-        database: 'employee_db'
-    },
-    console.log('Connected to database!')
-);
+
+
 
 //
 const viewAllEmployees = () => {
@@ -260,7 +253,7 @@ const updateEmployeeRole = () => {
 
 }
 
-//???????????????????NOT WORKING??????????????????????????????????????
+//
 const updateEmployeeManager = () => {
     inquirer.prompt([
         {
@@ -309,6 +302,32 @@ const updateEmployeeManager = () => {
 
 }
 
+const deleteEmployees = () => {
+    inquirer.prompt(
+        {
+            type: 'input',
+            message: "What is the employee's id?",
+            name: 'employeeId',
+
+        })
+        .then((answer)=>{
+  const deleteEmployeeQuery = `DELETE FROM employee WHERE id = '${answer.employeeId}'`
+ 
+  const displayDeleted = `SELECT CONCAT(employee.first_name, " ", employee.last_name) WHERE employee.id = '${answer.employeeId}`;
+    db.promise().query(deleteEmployeeQuery)
+    
+        .then(() => {
+            
+            console.log(displayDeleted  + 'deleted from the list.')
+            mainPrompt()
+        })
+        .catch((err) => {
+            console.log(err)
+            db.end()
+        })
+        })
+}
+
 //
 function mainPrompt() {
     inquirer.prompt([
@@ -326,9 +345,9 @@ function mainPrompt() {
                 'Add employees',
                 'Update employee roles',
                 'Update employee managers',
+                'Delete employees',
                 'Delete departments',
-                'Delete roles',
-                'Delete employees'
+                'Delete roles'
             ]
         }
 
@@ -353,6 +372,14 @@ function mainPrompt() {
             updateEmployeeRole()
         } else if (answer.view === 'Update employee managers') {
             updateEmployeeManager()
+        } else if (answer.view === 'Delete employees') {
+            deleteEmployees()
+        } else if (answer.view === 'Delete departments') {
+            deleteDepartment()
+        } else if (answer.view === 'Delete roles') {
+            deleteRoles()
+        } else {
+            db.end()
         }
     })
 }
